@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGA Government Data Catalog Visualization (Group 6)</title>
+    <!-- Google Fonts: Prompt for Thai, Inter for English/Numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Plotly JS library -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: rgba(25, 28, 41, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --secondary: #ec4899;
+            --accent: #10b981;
+            --accent-red: #ef4444;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', 'Inter', sans-serif;
+            transition: all 0.25s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            background-image: radial-gradient(circle at 10% 20%, rgba(90, 50, 150, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(50, 120, 200, 0.15) 0%, transparent 45%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        header {
+            background: rgba(15, 17, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-container p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--text-color);
+            background: var(--primary);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards and Layouts */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.7;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            min-height: 450px;
+        }
+
+        /* Control Panel */
+        .controls-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            background: #1f2937;
+            border: 1px solid var(--card-border);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-color);
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-muted);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-color);
+        }
+
+        /* Inspiration panel */
+        .idea-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .idea-card {
+            border-left: 4px solid var(--primary);
+        }
+
+        .idea-card.secondary {
+            border-left-color: var(--secondary);
+        }
+
+        .idea-card.accent {
+            border-left-color: var(--accent);
+        }
+
+        .idea-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tag-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .tag-pink { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+        .tag-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+        .bullet-list {
+            margin-top: 0.75rem;
+            padding-left: 1.25rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .bullet-list li {
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .alert-info svg {
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            .nav-tabs {
+                width: 100%;
+                overflow-x: auto;
+            }
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <h1>📊 DGA Catalog Insights</h1>
+            <p>Starter Kit for Fast Ideation & Interactive Visualization</p>
+        </div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('overview')">💡 ภาพรวม & ไอเดีย</button>
+            <button class="tab-btn" onclick="switchTab('energy')">⛽ กรมธุรกิจพลังงาน</button>
+            <button class="tab-btn" onclick="switchTab('probation')">🚨 กรมคุมประพฤติ</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- TAB 1: OVERVIEW -->
+        <div id="overview" class="tab-content active">
+            <div class="alert-info">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                <span><strong>แนะนำสำหรับทีม Hackathon:</strong> หน้านี้จัดทำขึ้นเพื่อให้ทุกคนเห็นว่าชุดข้อมูลดิบจาก GD Catalog สามารถนำมาปรับปรุงโครงสร้างและสร้างบอร์ดวิเคราะห์ (Dashboard) ระดับประเทศได้ง่ายๆ ในระยะเวลาอันสั้น!</span>
+            </div>
+
+            <div class="grid-3">
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">สถิติคดีเมาขับสะสมสูงสุด (เทศกาลปีใหม่)</div>
+                        <div class="stat-value" id="stats-max-cases">4,774 คดี</div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">บันทึกสถิติเมื่อปี พ.ศ. 2550</p>
+                    </div>
+                    <div class="stat-icon">🚨</div>
+                </div>
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">การใช้น้ำมันดีเซลสะสมภาคขนส่ง (ปี 2563)</div>
+                        <div class="stat-value" id="stats-total-diesel">19.04 พันล้านลิตร</div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">ครอบคลุมทั้ง 77 จังหวัดทั่วประเทศ</p>
+                    </div>
+                    <div class="stat-icon">🚚</div>
+                </div>
+                <div class="card stat-card">
+                    <div>
+                        <div class="stat-title">จำนวนคอลัมน์ข้อมูลที่พร้อมใช้งาน</div>
+                        <div class="stat-value">22 คอลัมน์</div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">ทำความสะอาดจาก 2 แหล่งข้อมูลเรียบร้อย</p>
+                    </div>
+                    <div class="stat-icon">🗃️</div>
+                </div>
+            </div>
+
+            <h2 style="font-size: 1.4rem; margin-bottom: 1rem; border-left: 4px solid var(--secondary); padding-left: 0.5rem;">💡 ไอเดียการต่อยอดและเปรียบเทียบข้อมูล (Hackathon Idea Sparks)</h2>
+            <div class="idea-grid">
+                <div class="card idea-card">
+                    <span class="tag tag-blue">ไอเดียที่ 1: พยากรณ์ความคุ้มค่าสถานีชาร์จ EV</span>
+                    <h3 style="margin: 0.5rem 0;">⚡ EV Charging Hub Predictor</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">นำข้อมูลการใช้น้ำมันเบนซิน/แก๊สโซฮอล์รายจังหวัด (กรมธุรกิจพลังงาน) มาวิเคราะห์อัตราการเติบโตของรถยนต์ไฟฟ้า (EV) เพื่อค้นหาจุดติดตั้งสถานีชาร์จที่คุ้มทุนเร็วที่สุดในแต่ละภาค</p>
+                    <ul class="bullet-list">
+                        <li><strong>ข้อมูลหลัก:</strong> ข้อมูลสถิติพลังงาน + สถิติจดทะเบียนรถ EV รายจังหวัด</li>
+                        <li><strong>เป้าหมาย:</strong> ช่วยเอกชนและภาครัฐวางแผนขยายโครงสร้างพื้นฐานพลังงานทดแทน</li>
+                    </ul>
+                </div>
+                <div class="card idea-card secondary">
+                    <span class="tag tag-pink">ไอเดียที่ 2: ดัชนีความเสี่ยงการจราจรหนาแน่นและคดีเมาขับ</span>
+                    <h3 style="margin: 0.5rem 0;">🚦 Smart Patrol & Risk Management</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">เปรียบเทียบข้อมูลจุดที่มีสถิติคดีคุมประพฤติข้อหาเมาแล้วขับสูงสุด (กรมคุมประพฤติ) เข้ากับพิกัดทางหลวงหลัก เพื่อระบุตำแหน่งจัดตั้งด่านตรวจแบบประเมินตามช่วงเวลา (Dynamic Checkpoint Allocation)</p>
+                    <ul class="bullet-list">
+                        <li><strong>ข้อมูลหลัก:</strong> สถิติคดีช่วงเทศกาล + พิกัดสถิติอุบัติเหตุบนท้องถนน</li>
+                        <li><strong>เป้าหมาย:</strong> ลดความเสียหายและอุบัติเหตุในช่วงเทศกาลสำคัญ</li>
+                    </ul>
+                </div>
+                <div class="card idea-card accent">
+                    <span class="tag tag-green">ไอเดียที่ 3: ระบบจับตาความปลอดภัยสถานบริการแก๊ส LPG/NGV</span>
+                    <h3 style="margin: 0.5rem 0;">🛡️ Gas Station Safety Index</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">วิเคราะห์ปริมาณการใช้งานแก๊สในแต่ละพื้นที่เปรียบเทียบกับสถิติเรื่องร้องเรียนและความถูกต้องของใบอนุญาตสถานบริการ (กรมธุรกิจพลังงาน) เพื่อให้ประชาชนใช้บริการได้อย่างมั่นใจ</p>
+                    <ul class="bullet-list">
+                        <li><strong>ข้อมูลหลัก:</strong> ข้อมูลใบอนุญาตสถานบริการแก๊ส + สถิติเรื่องร้องเรียนรายจังหวัด</li>
+                        <li><strong>เป้าหมาย:</strong> เพิ่มธรรมาภิบาลและการกำกับดูแลความปลอดภัยของพลังงานทางเลือก</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ENERGY -->
+        <div id="energy" class="tab-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <label for="energy-year">เลือกปี พ.ศ.</label>
+                    <select id="energy-year" onchange="updateEnergyCharts()">
+                        <option value="2563">2563</option>
+                        <option value="2562">2562</option>
+                        <option value="2561">2561</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="energy-fuel">ประเภทเชื้อเพลิง</label>
+                    <select id="energy-fuel" onchange="updateEnergyCharts()">
+                        <option value="Gasoline_Gasohol">เบนซิน/แก๊สโซฮอล์</option>
+                        <option value="Diesel">ดีเซล</option>
+                        <option value="Gas_LPG_NGV">แก๊ส LPG/NGV</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="chart-container" id="energy-trend-plot"></div>
+                <div class="chart-container" id="energy-pie-plot"></div>
+            </div>
+
+            <div class="chart-container" id="energy-prov-plot"></div>
+        </div>
+
+        <!-- TAB 3: PROBATION -->
+        <div id="probation" class="tab-content">
+            <div class="chart-container" id="probation-trend-plot"></div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; border-left: 4px solid var(--secondary); padding-left: 0.5rem;">📑 ตารางสถิติคดีเมาแล้วขับ ช่วงเทศกาลปีใหม่ย้อนหลัง (พ.ศ. 2549 - 2559)</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ปี พ.ศ.</th>
+                                <th>ช่วงเวลาในการรวบรวม</th>
+                                <th>จำนวนคดีสะสม (คดี)</th>
+                                <th>จังหวัดที่มีสถิติสูงสุด</th>
+                            </tr>
+                        </thead>
+                        <tbody id="probation-table-body">
+                            <!-- Rows will be dynamically loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Embed cleaned datasets directly into Javascript
+        const fuelData = [{"Sector": "Transportation", "Province": "Bangkok", "BE_Year": 2561, "LPG": 287130838, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 5344666516, "Fuel oil": 156126840, "Gasoline 91": 37526000, "Gasoline 95": 112709456, "Gasohol 91": 858927410, "Gasohol 95": 1525303321, "Natural gas": 21235000000}, {"Sector": "Transportation", "Province": "Samut Prakan", "BE_Year": 2561, "LPG": 44887031, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 752221018, "Fuel oil": 8097217, "Gasoline 91": 400880, "Gasoline 95": 7108603, "Gasohol 91": 107514810, "Gasohol 95": 142863672, "Natural gas": 6373000000}, {"Sector": "Transportation", "Province": "Nonthaburi", "BE_Year": 2561, "LPG": 84196931, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 400565276, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 10428983, "Gasohol 91": 92842740, "Gasohol 95": 145509242, "Natural gas": 4713000000}, {"Sector": "Transportation", "Province": "Pathum Thani", "BE_Year": 2561, "LPG": 66870483, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 586651542, "Fuel oil": 88881, "Gasoline 91": 0, "Gasoline 95": 7606690, "Gasohol 91": 107503230, "Gasohol 95": 123427052, "Natural gas": 7450000000}, {"Sector": "Transportation", "Province": "Phra Nakorn Si Ayuttaya", "BE_Year": 2561, "LPG": 38559232, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 497618111, "Fuel oil": 75000, "Gasoline 91": 0, "Gasoline 95": 6680293, "Gasohol 91": 69525550, "Gasohol 95": 67433962, "Natural gas": 2303000000}, {"Sector": "Transportation", "Province": "Angthong", "BE_Year": 2561, "LPG": 3148890, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 57679336, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 715550, "Gasohol 91": 9371470, "Gasohol 95": 9579503, "Natural gas": 288000000}, {"Sector": "Transportation", "Province": "Lopburi", "BE_Year": 2561, "LPG": 9181575, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 162222547, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1114110, "Gasohol 91": 33161130, "Gasohol 95": 29409847, "Natural gas": 299000000}, {"Sector": "Transportation", "Province": "Sing Buri", "BE_Year": 2561, "LPG": 5059325, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 60754207, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 688730, "Gasohol 91": 10797720, "Gasohol 95": 12300629, "Natural gas": 338000000}, {"Sector": "Transportation", "Province": "Chainat", "BE_Year": 2561, "LPG": 3531680, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 45498638, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 576520, "Gasohol 91": 9715180, "Gasohol 95": 9362577, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Saraburi", "BE_Year": 2561, "LPG": 20180472, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 411539703, "Fuel oil": 242042, "Gasoline 91": 0, "Gasoline 95": 2395900, "Gasohol 91": 43308250, "Gasohol 95": 45903172, "Natural gas": 7264000000}, {"Sector": "Transportation", "Province": "Chonburi", "BE_Year": 2561, "LPG": 62859141, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 2799015431, "Fuel oil": 1156622593, "Gasoline 91": 714470, "Gasoline 95": 67802722, "Gasohol 91": 339190230, "Gasohol 95": 436594909, "Natural gas": 9125000000}, {"Sector": "Transportation", "Province": "Rayong", "BE_Year": 2561, "LPG": 22165769, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 401836389, "Fuel oil": 85261748, "Gasoline 91": 0, "Gasoline 95": 7356371, "Gasohol 91": 65731260, "Gasohol 95": 74334698, "Natural gas": 1386000000}, {"Sector": "Transportation", "Province": "Chanthaburi", "BE_Year": 2561, "LPG": 12686540, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 156553011, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 7833610, "Gasohol 91": 19387800, "Gasohol 95": 32026601, "Natural gas": 408000000}, {"Sector": "Transportation", "Province": "Trat", "BE_Year": 2561, "LPG": 3480800, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 55522310, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2836740, "Gasohol 91": 5758454, "Gasohol 95": 14355265, "Natural gas": 89000000}, {"Sector": "Transportation", "Province": "Chachoengsao", "BE_Year": 2561, "LPG": 16961855, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 342338771, "Fuel oil": 1454380, "Gasoline 91": 0, "Gasoline 95": 4336960, "Gasohol 91": 52693627, "Gasohol 95": 51371123, "Natural gas": 2806000000}, {"Sector": "Transportation", "Province": "Prachinburi", "BE_Year": 2561, "LPG": 9165230, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 136707017, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2763393, "Gasohol 91": 27995790, "Gasohol 95": 23493148, "Natural gas": 1052000000}, {"Sector": "Transportation", "Province": "Nakornnayok", "BE_Year": 2561, "LPG": 5994675, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 48061925, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1231400, "Gasohol 91": 11037630, "Gasohol 95": 11250007, "Natural gas": 119000000}, {"Sector": "Transportation", "Province": "Sa Kaeo", "BE_Year": 2561, "LPG": 17205275, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 98353253, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 704820, "Gasohol 91": 13086880, "Gasohol 95": 18606134, "Natural gas": 520000000}, {"Sector": "Transportation", "Province": "Nakhon Ratchasima", "BE_Year": 2561, "LPG": 37853062, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 783271762, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 6398050, "Gasohol 91": 114340860, "Gasohol 95": 115716881, "Natural gas": 2167000000}, {"Sector": "Transportation", "Province": "Buriram", "BE_Year": 2561, "LPG": 10797875, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 277124778, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 3619330, "Gasohol 91": 53251310, "Gasohol 95": 39653204, "Natural gas": 366000000}, {"Sector": "Transportation", "Province": "Surin", "BE_Year": 2561, "LPG": 12317510, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 151491069, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2619810, "Gasohol 91": 37138540, "Gasohol 95": 19261051, "Natural gas": 228000000}, {"Sector": "Transportation", "Province": "Sisaket", "BE_Year": 2561, "LPG": 6613560, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 145707983, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2502520, "Gasohol 91": 22001430, "Gasohol 95": 24564613, "Natural gas": 159000000}, {"Sector": "Transportation", "Province": "Ubon Ratchathani", "BE_Year": 2561, "LPG": 13852371, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 237255950, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2822670, "Gasohol 91": 55146480, "Gasohol 95": 39303779, "Natural gas": 347000000}, {"Sector": "Transportation", "Province": "Yasothon", "BE_Year": 2561, "LPG": 4300890, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 60563908, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 588110, "Gasohol 91": 11177010, "Gasohol 95": 8969532, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Chaiyaphum", "BE_Year": 2561, "LPG": 5074295, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 135351829, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1000940, "Gasohol 91": 19044290, "Gasohol 95": 21707026, "Natural gas": 272000000}, {"Sector": "Transportation", "Province": "Amnat Charoen", "BE_Year": 2561, "LPG": 1486040, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 36162613, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 399550, "Gasohol 91": 5832320, "Gasohol 95": 6013431, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Bungkan", "BE_Year": 2561, "LPG": 1541070, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 24683557, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 16030, "Gasohol 91": 5034590, "Gasohol 95": 5247136, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nong Bua Lam Phu", "BE_Year": 2561, "LPG": 1075210, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 40718354, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 232290, "Gasohol 91": 6636830, "Gasohol 95": 5181522, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Khon Kaen", "BE_Year": 2561, "LPG": 23475746, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 387379897, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2332380, "Gasohol 91": 82633250, "Gasohol 95": 59986267, "Natural gas": 1680000000}, {"Sector": "Transportation", "Province": "Udon Thani", "BE_Year": 2561, "LPG": 8816120, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 493925765, "Fuel oil": 44740, "Gasoline 91": 0, "Gasoline 95": 5081650, "Gasohol 91": 78752840, "Gasohol 95": 90404010, "Natural gas": 329000000}, {"Sector": "Transportation", "Province": "Loei", "BE_Year": 2561, "LPG": 2264410, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 87358967, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1023640, "Gasohol 91": 15999100, "Gasohol 95": 13621927, "Natural gas": 90000000}, {"Sector": "Transportation", "Province": "Nong Khai", "BE_Year": 2561, "LPG": 1698660, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 43895203, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1024490, "Gasohol 91": 14585820, "Gasohol 95": 14177060, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Maha Sarakam", "BE_Year": 2561, "LPG": 6423660, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 101067806, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 329290, "Gasohol 91": 30646130, "Gasohol 95": 14536735, "Natural gas": 463000000}, {"Sector": "Transportation", "Province": "Roi Et", "BE_Year": 2561, "LPG": 18419902, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 145242594, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 446840, "Gasohol 91": 26892350, "Gasohol 95": 29899948, "Natural gas": 334000000}, {"Sector": "Transportation", "Province": "Kalasin", "BE_Year": 2561, "LPG": 7169255, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 90926970, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 366270, "Gasohol 91": 19231360, "Gasohol 95": 13325939, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Sakon Nakhon", "BE_Year": 2561, "LPG": 5279920, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 116942239, "Fuel oil": 164000, "Gasoline 91": 0, "Gasoline 95": 451900, "Gasohol 91": 24942490, "Gasohol 95": 26022427, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nakhon Phanom", "BE_Year": 2561, "LPG": 6646676, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 72740545, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 552030, "Gasohol 91": 13991420, "Gasohol 95": 11490705, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Mukdahan", "BE_Year": 2561, "LPG": 3165484, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 49036626, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 548310, "Gasohol 91": 6820030, "Gasohol 95": 8496144, "Natural gas": 156000000}, {"Sector": "Transportation", "Province": "Chiang Mai", "BE_Year": 2561, "LPG": 13724810, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 362689928, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 10020400, "Gasohol 91": 117409720, "Gasohol 95": 91442892, "Natural gas": 291000000}, {"Sector": "Transportation", "Province": "Lamphun", "BE_Year": 2561, "LPG": 1615295, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 68908742, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1011550, "Gasohol 91": 19657960, "Gasohol 95": 12227859, "Natural gas": 76000000}, {"Sector": "Transportation", "Province": "Lampang", "BE_Year": 2561, "LPG": 4505534, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 189285901, "Fuel oil": 163000, "Gasoline 91": 0, "Gasoline 95": 2740870, "Gasohol 91": 35455500, "Gasohol 95": 34260840, "Natural gas": 433000000}, {"Sector": "Transportation", "Province": "Udtradit", "BE_Year": 2561, "LPG": 2594410, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 56779059, "Fuel oil": 59730, "Gasoline 91": 0, "Gasoline 95": 1884840, "Gasohol 91": 11551560, "Gasohol 95": 14278061, "Natural gas": 88000000}, {"Sector": "Transportation", "Province": "Phare", "BE_Year": 2561, "LPG": 1577495, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 56268225, "Fuel oil": 44725, "Gasoline 91": 0, "Gasoline 95": 911430, "Gasohol 91": 11289700, "Gasohol 95": 10889114, "Natural gas": 98000000}, {"Sector": "Transportation", "Province": "Nan", "BE_Year": 2561, "LPG": 1206760, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 54465840, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2016400, "Gasohol 91": 9718480, "Gasohol 95": 19530622, "Natural gas": 55000000}, {"Sector": "Transportation", "Province": "Phayao", "BE_Year": 2561, "LPG": 1440990, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 43452622, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2534140, "Gasohol 91": 12428710, "Gasohol 95": 9212610, "Natural gas": 75000000}, {"Sector": "Transportation", "Province": "Chiang Rai", "BE_Year": 2561, "LPG": 7058655, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 166782056, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 3565190, "Gasohol 91": 32437350, "Gasohol 95": 32748014, "Natural gas": 147000000}, {"Sector": "Transportation", "Province": "Mae Hong Son", "BE_Year": 2561, "LPG": 79270, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 30105321, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 5015140, "Gasohol 91": 5809010, "Gasohol 95": 5002973, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nakhon Sawan", "BE_Year": 2561, "LPG": 14450017, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 241158083, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1219330, "Gasohol 91": 31745900, "Gasohol 95": 40955691, "Natural gas": 599000000}, {"Sector": "Transportation", "Province": "Uthai Thani", "BE_Year": 2561, "LPG": 2274510, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 45193422, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 139810, "Gasohol 91": 7844720, "Gasohol 95": 7381323, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Kamphaeng Phet", "BE_Year": 2561, "LPG": 4762080, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 119506142, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1093290, "Gasohol 91": 14252170, "Gasohol 95": 15413205, "Natural gas": 515000000}, {"Sector": "Transportation", "Province": "Tak", "BE_Year": 2561, "LPG": 2677330, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 160143476, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 291071, "Gasohol 91": 20327700, "Gasohol 95": 30367189, "Natural gas": 277000000}, {"Sector": "Transportation", "Province": "Sukhothai", "BE_Year": 2561, "LPG": 2135480, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 97579672, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1653760, "Gasohol 91": 13460390, "Gasohol 95": 21444751, "Natural gas": 161000000}, {"Sector": "Transportation", "Province": "Phitsanulok", "BE_Year": 2561, "LPG": 11359998, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 222375340, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2998090, "Gasohol 91": 36011630, "Gasohol 95": 43114768, "Natural gas": 616000000}, {"Sector": "Transportation", "Province": "Phichit", "BE_Year": 2561, "LPG": 5027320, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 96835439, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 497270, "Gasohol 91": 14201550, "Gasohol 95": 21832417, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phetchabun", "BE_Year": 2561, "LPG": 5488583, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 139276606, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1473680, "Gasohol 91": 15600940, "Gasohol 95": 24930060, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Ratchaburi", "BE_Year": 2561, "LPG": 15892390, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 209103477, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 7205840, "Gasohol 91": 29356800, "Gasohol 95": 46067911, "Natural gas": 617000000}, {"Sector": "Transportation", "Province": "Kanchanaburi", "BE_Year": 2561, "LPG": 13476280, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 214291879, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 9960290, "Gasohol 91": 27025560, "Gasohol 95": 38481967, "Natural gas": 264000000}, {"Sector": "Transportation", "Province": "Suphanburi", "BE_Year": 2561, "LPG": 15506160, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 161746267, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 5199300, "Gasohol 91": 31713050, "Gasohol 95": 32651629, "Natural gas": 1285000000}, {"Sector": "Transportation", "Province": "Nakhon Pathom", "BE_Year": 2561, "LPG": 46176068, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 369673944, "Fuel oil": 1549259, "Gasoline 91": 0, "Gasoline 95": 8032040, "Gasohol 91": 54606980, "Gasohol 95": 74123314, "Natural gas": 3059000000}, {"Sector": "Transportation", "Province": "Samut Sakhon", "BE_Year": 2561, "LPG": 25983711, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 305801382, "Fuel oil": 1465653, "Gasoline 91": 0, "Gasoline 95": 3741460, "Gasohol 91": 41083930, "Gasohol 95": 51882396, "Natural gas": 523000000}, {"Sector": "Transportation", "Province": "Samut Songkhram", "BE_Year": 2561, "LPG": 7464620, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 72037082, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1808690, "Gasohol 91": 8994700, "Gasohol 95": 11382111, "Natural gas": 757000000}, {"Sector": "Transportation", "Province": "Phetchaburi", "BE_Year": 2561, "LPG": 10989595, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 185104063, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2189420, "Gasohol 91": 25995170, "Gasohol 95": 42144768, "Natural gas": 909000000}, {"Sector": "Transportation", "Province": "Prachuap Khiri Khan", "BE_Year": 2561, "LPG": 6667334, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 164637092, "Fuel oil": 618008, "Gasoline 91": 0, "Gasoline 95": 2175150, "Gasohol 91": 23621110, "Gasohol 95": 31556642, "Natural gas": 739000000}, {"Sector": "Transportation", "Province": "Nakhon Si Thammarat", "BE_Year": 2561, "LPG": 11940935, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 328614442, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 9466370, "Gasohol 91": 47767570, "Gasohol 95": 75976690, "Natural gas": 401000000}, {"Sector": "Transportation", "Province": "Krabi", "BE_Year": 2561, "LPG": 2190030, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 124227482, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1564930, "Gasohol 91": 26879770, "Gasohol 95": 23774449, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phangnga", "BE_Year": 2561, "LPG": 758780, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 68961442, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 491970, "Gasohol 91": 23406920, "Gasohol 95": 17457518, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phuket", "BE_Year": 2561, "LPG": 6412224, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 181405586, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1655000, "Gasohol 91": 99377390, "Gasohol 95": 56610283, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Surat Thani", "BE_Year": 2561, "LPG": 8788836, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 642377199, "Fuel oil": 6669422, "Gasoline 91": 0, "Gasoline 95": 13032220, "Gasohol 91": 74076160, "Gasohol 95": 111712793, "Natural gas": 340000000}, {"Sector": "Transportation", "Province": "Ranong", "BE_Year": 2561, "LPG": 479400, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 34364284, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1200490, "Gasohol 91": 5066810, "Gasohol 95": 9146278, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Chumphon", "BE_Year": 2561, "LPG": 4988780, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 186759437, "Fuel oil": 902110, "Gasoline 91": 0, "Gasoline 95": 6821680, "Gasohol 91": 16504410, "Gasohol 95": 28048692, "Natural gas": 163000000}, {"Sector": "Transportation", "Province": "Songkhla", "BE_Year": 2561, "LPG": 9519928, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 694659655, "Fuel oil": 2235729, "Gasoline 91": 0, "Gasoline 95": 9347050, "Gasohol 91": 107887280, "Gasohol 95": 185694270, "Natural gas": 595000000}, {"Sector": "Transportation", "Province": "Satun", "BE_Year": 2561, "LPG": 789455, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 43111616, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 154950, "Gasohol 91": 8797530, "Gasohol 95": 17001357, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Trang", "BE_Year": 2561, "LPG": 2653820, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 104357333, "Fuel oil": 71811, "Gasoline 91": 0, "Gasoline 95": 2295020, "Gasohol 91": 22708090, "Gasohol 95": 32018051, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phatthalung", "BE_Year": 2561, "LPG": 2448097, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 50846972, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 496800, "Gasohol 91": 9386110, "Gasohol 95": 14325028, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Pattani", "BE_Year": 2561, "LPG": 2118660, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 92528926, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 279750, "Gasohol 91": 9073320, "Gasohol 95": 38462743, "Natural gas": 108000000}, {"Sector": "Transportation", "Province": "Yala", "BE_Year": 2561, "LPG": 991030, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 34163876, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 803080, "Gasohol 91": 4506350, "Gasohol 95": 15613241, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Narathiwat", "BE_Year": 2561, "LPG": 625710, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 37418629, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 292920, "Gasohol 91": 9814750, "Gasohol 95": 9458912, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Bangkok", "BE_Year": 2562, "LPG": 255991884, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 5226364573, "Fuel oil": 132953711, "Gasoline 91": 39640000, "Gasoline 95": 96971243, "Gasohol 91": 810978889, "Gasohol 95": 1607981245, "Natural gas": 20290000000}, {"Sector": "Transportation", "Province": "Samut Prakan", "BE_Year": 2562, "LPG": 38582827, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 746661256, "Fuel oil": 5930442, "Gasoline 91": 312000, "Gasoline 95": 6264137, "Gasohol 91": 98465901, "Gasohol 95": 159437928, "Natural gas": 5862000000}, {"Sector": "Transportation", "Province": "Nonthaburi", "BE_Year": 2562, "LPG": 73645220, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 410957647, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 8784314, "Gasohol 91": 86702067, "Gasohol 95": 160314834, "Natural gas": 4599000000}, {"Sector": "Transportation", "Province": "Pathum Thani", "BE_Year": 2562, "LPG": 58682805, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 612656758, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 6418003, "Gasohol 91": 103141258, "Gasohol 95": 133558584, "Natural gas": 7281000000}, {"Sector": "Transportation", "Province": "Phra Nakorn Si Ayuttaya", "BE_Year": 2562, "LPG": 32520954, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 523589433, "Fuel oil": 45000, "Gasoline 91": 0, "Gasoline 95": 3971533, "Gasohol 91": 66873764, "Gasohol 95": 73100358, "Natural gas": 2076000000}, {"Sector": "Transportation", "Province": "Angthong", "BE_Year": 2562, "LPG": 2558030, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 51148975, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 559079, "Gasohol 91": 8537386, "Gasohol 95": 10010716, "Natural gas": 157000000}, {"Sector": "Transportation", "Province": "Lopburi", "BE_Year": 2562, "LPG": 7622020, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 153350489, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 986513, "Gasohol 91": 31356333, "Gasohol 95": 31789875, "Natural gas": 227000000}, {"Sector": "Transportation", "Province": "Sing Buri", "BE_Year": 2562, "LPG": 5141420, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 64422435, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 566257, "Gasohol 91": 10042112, "Gasohol 95": 13386711, "Natural gas": 477000000}, {"Sector": "Transportation", "Province": "Chainat", "BE_Year": 2562, "LPG": 3312061, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 52815983, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 338107, "Gasohol 91": 9593355, "Gasohol 95": 10601214, "Natural gas": 19000000}, {"Sector": "Transportation", "Province": "Saraburi", "BE_Year": 2562, "LPG": 14387312, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 412189845, "Fuel oil": 378424, "Gasoline 91": 0, "Gasoline 95": 2152029, "Gasohol 91": 41965144, "Gasohol 95": 49497109, "Natural gas": 6514000000}, {"Sector": "Transportation", "Province": "Chonburi", "BE_Year": 2562, "LPG": 52595378, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 3151086810, "Fuel oil": 1022949131, "Gasoline 91": 629000, "Gasoline 95": 57487910, "Gasohol 91": 335333443, "Gasohol 95": 464374264, "Natural gas": 9017000000}, {"Sector": "Transportation", "Province": "Rayong", "BE_Year": 2562, "LPG": 21470902, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 426689454, "Fuel oil": 51121004, "Gasoline 91": 0, "Gasoline 95": 5434720, "Gasohol 91": 63563980, "Gasohol 95": 82085824, "Natural gas": 1198000000}, {"Sector": "Transportation", "Province": "Chanthaburi", "BE_Year": 2562, "LPG": 10927430, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 182398203, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 8605462, "Gasohol 91": 18739698, "Gasohol 95": 36074361, "Natural gas": 381000000}, {"Sector": "Transportation", "Province": "Trat", "BE_Year": 2562, "LPG": 3049600, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 57418509, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2659941, "Gasohol 91": 4895198, "Gasohol 95": 15266911, "Natural gas": 70000000}, {"Sector": "Transportation", "Province": "Chachoengsao", "BE_Year": 2562, "LPG": 14188228, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 342315703, "Fuel oil": 1707713, "Gasoline 91": 0, "Gasoline 95": 3684541, "Gasohol 91": 47328927, "Gasohol 95": 53448820, "Natural gas": 2664000000}, {"Sector": "Transportation", "Province": "Prachinburi", "BE_Year": 2562, "LPG": 7695810, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 142985380, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1889028, "Gasohol 91": 27032993, "Gasohol 95": 25081980, "Natural gas": 942000000}, {"Sector": "Transportation", "Province": "Nakornnayok", "BE_Year": 2562, "LPG": 4788150, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 49013950, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1260552, "Gasohol 91": 11345708, "Gasohol 95": 12741511, "Natural gas": 123000000}, {"Sector": "Transportation", "Province": "Sa Kaeo", "BE_Year": 2562, "LPG": 13074522, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 88508947, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 433473, "Gasohol 91": 11318623, "Gasohol 95": 19389416, "Natural gas": 502000000}, {"Sector": "Transportation", "Province": "Nakhon Ratchasima", "BE_Year": 2562, "LPG": 35964574, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 730911257, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 5331226, "Gasohol 91": 107043574, "Gasohol 95": 116457623, "Natural gas": 1990000000}, {"Sector": "Transportation", "Province": "Buriram", "BE_Year": 2562, "LPG": 8934360, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 249190768, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 3823296, "Gasohol 91": 50864908, "Gasohol 95": 38811844, "Natural gas": 304000000}, {"Sector": "Transportation", "Province": "Surin", "BE_Year": 2562, "LPG": 11186015, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 155674969, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2272049, "Gasohol 91": 37425896, "Gasohol 95": 22448054, "Natural gas": 254000000}, {"Sector": "Transportation", "Province": "Sisaket", "BE_Year": 2562, "LPG": 5896271, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 141310557, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2050567, "Gasohol 91": 21365570, "Gasohol 95": 28119930, "Natural gas": 141000000}, {"Sector": "Transportation", "Province": "Ubon Ratchathani", "BE_Year": 2562, "LPG": 12853558, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 232760977, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2451481, "Gasohol 91": 53413634, "Gasohol 95": 41888636, "Natural gas": 294000000}, {"Sector": "Transportation", "Province": "Yasothon", "BE_Year": 2562, "LPG": 4098235, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 59817299, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 515362, "Gasohol 91": 10666764, "Gasohol 95": 9320420, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Chaiyaphum", "BE_Year": 2562, "LPG": 4313935, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 135706063, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 820762, "Gasohol 91": 19036317, "Gasohol 95": 24905157, "Natural gas": 278000000}, {"Sector": "Transportation", "Province": "Amnat Charoen", "BE_Year": 2562, "LPG": 1236560, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 43125895, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 378392, "Gasohol 91": 6357730, "Gasohol 95": 8105638, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Bungkan", "BE_Year": 2562, "LPG": 1626860, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 32637431, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 51195, "Gasohol 91": 5985486, "Gasohol 95": 6946766, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nong Bua Lam Phu", "BE_Year": 2562, "LPG": 793440, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 47703221, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 240597, "Gasohol 91": 7817768, "Gasohol 95": 7111176, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Khon Kaen", "BE_Year": 2562, "LPG": 21077683, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 392582103, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1905380, "Gasohol 91": 79106320, "Gasohol 95": 65078737, "Natural gas": 1558000000}, {"Sector": "Transportation", "Province": "Udon Thani", "BE_Year": 2562, "LPG": 7532500, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 530140977, "Fuel oil": 14894, "Gasoline 91": 0, "Gasoline 95": 3894670, "Gasohol 91": 77149830, "Gasohol 95": 103176664, "Natural gas": 303000000}, {"Sector": "Transportation", "Province": "Loei", "BE_Year": 2562, "LPG": 2234070, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 86997740, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 792236, "Gasohol 91": 15598832, "Gasohol 95": 14943096, "Natural gas": 67000000}, {"Sector": "Transportation", "Province": "Nong Khai", "BE_Year": 2562, "LPG": 1309020, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 73666641, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 889454, "Gasohol 91": 14415892, "Gasohol 95": 16171119, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Maha Sarakam", "BE_Year": 2562, "LPG": 6287160, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 105537179, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 258069, "Gasohol 91": 29990589, "Gasohol 95": 16708544, "Natural gas": 404000000}, {"Sector": "Transportation", "Province": "Roi Et", "BE_Year": 2562, "LPG": 16834185, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 147410521, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 340610, "Gasohol 91": 25970370, "Gasohol 95": 33267606, "Natural gas": 293000000}, {"Sector": "Transportation", "Province": "Kalasin", "BE_Year": 2562, "LPG": 5853690, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 97960885, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 303363, "Gasohol 91": 18783882, "Gasohol 95": 15364048, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Sakon Nakhon", "BE_Year": 2562, "LPG": 4284743, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 129259582, "Fuel oil": 105000, "Gasoline 91": 0, "Gasoline 95": 411728, "Gasohol 91": 25081941, "Gasohol 95": 31292053, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nakhon Phanom", "BE_Year": 2562, "LPG": 6604113, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 74906888, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 350701, "Gasohol 91": 14583926, "Gasohol 95": 13046061, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Mukdahan", "BE_Year": 2562, "LPG": 2995647, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 52952900, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 461685, "Gasohol 91": 6610011, "Gasohol 95": 9656078, "Natural gas": 147000000}, {"Sector": "Transportation", "Province": "Chiang Mai", "BE_Year": 2562, "LPG": 11018470, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 357287283, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 9705671, "Gasohol 91": 118690158, "Gasohol 95": 93113065, "Natural gas": 257000000}, {"Sector": "Transportation", "Province": "Lamphun", "BE_Year": 2562, "LPG": 1215400, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 67770932, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 936083, "Gasohol 91": 19336130, "Gasohol 95": 12634906, "Natural gas": 69000000}, {"Sector": "Transportation", "Province": "Lampang", "BE_Year": 2562, "LPG": 3527786, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 166778243, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2309593, "Gasohol 91": 32643982, "Gasohol 95": 35106960, "Natural gas": 335000000}, {"Sector": "Transportation", "Province": "Udtradit", "BE_Year": 2562, "LPG": 2352880, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 57233731, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1962536, "Gasohol 91": 10942268, "Gasohol 95": 15906380, "Natural gas": 69000000}, {"Sector": "Transportation", "Province": "Phare", "BE_Year": 2562, "LPG": 1223927, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 53694969, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 784382, "Gasohol 91": 11357321, "Gasohol 95": 12759145, "Natural gas": 90000000}, {"Sector": "Transportation", "Province": "Nan", "BE_Year": 2562, "LPG": 2017050, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 58203194, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1669449, "Gasohol 91": 9702553, "Gasohol 95": 23230921, "Natural gas": 46000000}, {"Sector": "Transportation", "Province": "Phayao", "BE_Year": 2562, "LPG": 905550, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 45522119, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2276269, "Gasohol 91": 12336555, "Gasohol 95": 10538600, "Natural gas": 63000000}, {"Sector": "Transportation", "Province": "Chiang Rai", "BE_Year": 2562, "LPG": 5902823, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 170199133, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2780021, "Gasohol 91": 32555555, "Gasohol 95": 36859410, "Natural gas": 121000000}, {"Sector": "Transportation", "Province": "Mae Hong Son", "BE_Year": 2562, "LPG": 68135, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 28787019, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 5479834, "Gasohol 91": 5834065, "Gasohol 95": 5413406, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nakhon Sawan", "BE_Year": 2562, "LPG": 12301834, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 250572058, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1076263, "Gasohol 91": 28570633, "Gasohol 95": 41744795, "Natural gas": 453000000}, {"Sector": "Transportation", "Province": "Uthai Thani", "BE_Year": 2562, "LPG": 1943100, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 51890962, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 85977, "Gasohol 91": 7980200, "Gasohol 95": 9034341, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Kamphaeng Phet", "BE_Year": 2562, "LPG": 3521670, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 108445437, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 872362, "Gasohol 91": 12644500, "Gasohol 95": 16449573, "Natural gas": 495000000}, {"Sector": "Transportation", "Province": "Tak", "BE_Year": 2562, "LPG": 2429579, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 169240335, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 189218, "Gasohol 91": 16125601, "Gasohol 95": 25472641, "Natural gas": 268000000}, {"Sector": "Transportation", "Province": "Sukhothai", "BE_Year": 2562, "LPG": 1954830, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 92365635, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1334758, "Gasohol 91": 12505718, "Gasohol 95": 21236667, "Natural gas": 156000000}, {"Sector": "Transportation", "Province": "Phitsanulok", "BE_Year": 2562, "LPG": 9633869, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 253415624, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2542338, "Gasohol 91": 34221257, "Gasohol 95": 50926508, "Natural gas": 536000000}, {"Sector": "Transportation", "Province": "Phichit", "BE_Year": 2562, "LPG": 3842510, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 87618833, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 405635, "Gasohol 91": 13609469, "Gasohol 95": 22058197, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phetchabun", "BE_Year": 2562, "LPG": 4781280, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 139843603, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1441194, "Gasohol 91": 16711958, "Gasohol 95": 27924318, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Ratchaburi", "BE_Year": 2562, "LPG": 15050745, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 221641426, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 6089044, "Gasohol 91": 26810986, "Gasohol 95": 48139843, "Natural gas": 572000000}, {"Sector": "Transportation", "Province": "Kanchanaburi", "BE_Year": 2562, "LPG": 12259300, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 194419050, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 8581134, "Gasohol 91": 24138413, "Gasohol 95": 41267982, "Natural gas": 261000000}, {"Sector": "Transportation", "Province": "Suphanburi", "BE_Year": 2562, "LPG": 14036765, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 170673014, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 4666000, "Gasohol 91": 29552343, "Gasohol 95": 35381191, "Natural gas": 1242000000}, {"Sector": "Transportation", "Province": "Nakhon Pathom", "BE_Year": 2562, "LPG": 41194675, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 372272959, "Fuel oil": 423931, "Gasoline 91": 0, "Gasoline 95": 7053845, "Gasohol 91": 49752476, "Gasohol 95": 80812324, "Natural gas": 2874000000}, {"Sector": "Transportation", "Province": "Samut Sakhon", "BE_Year": 2562, "LPG": 22139625, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 313189004, "Fuel oil": 1661620, "Gasoline 91": 0, "Gasoline 95": 3282477, "Gasohol 91": 38614465, "Gasohol 95": 56935380, "Natural gas": 538000000}, {"Sector": "Transportation", "Province": "Samut Songkhram", "BE_Year": 2562, "LPG": 5990115, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 77257255, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1544839, "Gasohol 91": 8136314, "Gasohol 95": 12319393, "Natural gas": 696000000}, {"Sector": "Transportation", "Province": "Phetchaburi", "BE_Year": 2562, "LPG": 9778250, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 202508079, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1752586, "Gasohol 91": 23856317, "Gasohol 95": 45063578, "Natural gas": 798000000}, {"Sector": "Transportation", "Province": "Prachuap Khiri Khan", "BE_Year": 2562, "LPG": 6303221, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 174928607, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1853100, "Gasohol 91": 22659350, "Gasohol 95": 33628944, "Natural gas": 627000000}, {"Sector": "Transportation", "Province": "Nakhon Si Thammarat", "BE_Year": 2562, "LPG": 10467088, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 338499052, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 8969624, "Gasohol 91": 45017500, "Gasohol 95": 79787276, "Natural gas": 318000000}, {"Sector": "Transportation", "Province": "Krabi", "BE_Year": 2562, "LPG": 1762435, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 123114416, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1292524, "Gasohol 91": 26192772, "Gasohol 95": 26613344, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phangnga", "BE_Year": 2562, "LPG": 602750, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 71074047, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 393836, "Gasohol 91": 22039357, "Gasohol 95": 18639649, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phuket", "BE_Year": 2562, "LPG": 5381179, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 184534612, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1562559, "Gasohol 91": 96566348, "Gasohol 95": 61647633, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Surat Thani", "BE_Year": 2562, "LPG": 7280027, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 608962393, "Fuel oil": 8799610, "Gasoline 91": 0, "Gasoline 95": 11045989, "Gasohol 91": 70284805, "Gasohol 95": 110228462, "Natural gas": 309000000}, {"Sector": "Transportation", "Province": "Ranong", "BE_Year": 2562, "LPG": 392340, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 39823241, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 882888, "Gasohol 91": 5416883, "Gasohol 95": 9440420, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Chumphon", "BE_Year": 2562, "LPG": 4181640, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 193756866, "Fuel oil": 150000, "Gasoline 91": 0, "Gasoline 95": 6134969, "Gasohol 91": 15631992, "Gasohol 95": 29243530, "Natural gas": 130000000}, {"Sector": "Transportation", "Province": "Songkhla", "BE_Year": 2562, "LPG": 7503749, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 702563977, "Fuel oil": 251757, "Gasoline 91": 0, "Gasoline 95": 7036571, "Gasohol 91": 107547365, "Gasohol 95": 198014328, "Natural gas": 546000000}, {"Sector": "Transportation", "Province": "Satun", "BE_Year": 2562, "LPG": 630250, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 41723992, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 109950, "Gasohol 91": 8093474, "Gasohol 95": 17734420, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Trang", "BE_Year": 2562, "LPG": 2198000, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 94934461, "Fuel oil": 95870, "Gasoline 91": 0, "Gasoline 95": 1752958, "Gasohol 91": 21061320, "Gasohol 95": 30234870, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phatthalung", "BE_Year": 2562, "LPG": 1968660, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 50303207, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 359021, "Gasohol 91": 9317615, "Gasohol 95": 15704974, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Pattani", "BE_Year": 2562, "LPG": 1820800, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 94304354, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 21926, "Gasohol 91": 8301647, "Gasohol 95": 45435440, "Natural gas": 100000000}, {"Sector": "Transportation", "Province": "Yala", "BE_Year": 2562, "LPG": 795630, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 38505878, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 781999, "Gasohol 91": 4812110, "Gasohol 95": 19688652, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Narathiwat", "BE_Year": 2562, "LPG": 440310, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 37685793, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 244815, "Gasohol 91": 11111426, "Gasohol 95": 10612279, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Bangkok", "BE_Year": 2563, "LPG": 174689479, "Low Speed Diesel (LSD)": 5126056, "High Speed Diesel (HSD)/Biodiesel": 5142073960, "Fuel oil": 112122197, "Gasoline 91": 91490000, "Gasoline 95": 87939012, "Gasohol 91": 645258572, "Gasohol 95": 1712707174, "Natural gas": 14414000000}, {"Sector": "Transportation", "Province": "Samut Prakan", "BE_Year": 2563, "LPG": 26535526, "Low Speed Diesel (LSD)": 11003, "High Speed Diesel (HSD)/Biodiesel": 713343446, "Fuel oil": 3333620, "Gasoline 91": 9079641, "Gasoline 95": 6454155, "Gasohol 91": 90331930, "Gasohol 95": 172739877, "Natural gas": 4160000000}, {"Sector": "Transportation", "Province": "Nonthaburi", "BE_Year": 2563, "LPG": 54647652, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 443010195, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 10241848, "Gasohol 91": 80983644, "Gasohol 95": 188534792, "Natural gas": 3409000000}, {"Sector": "Transportation", "Province": "Pathum Thani", "BE_Year": 2563, "LPG": 42838142, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 658887012, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 3950329, "Gasohol 91": 93982019, "Gasohol 95": 162200746, "Natural gas": 5564000000}, {"Sector": "Transportation", "Province": "Phra Nakorn Si Ayuttaya", "BE_Year": 2563, "LPG": 21979035, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 566471123, "Fuel oil": 165000, "Gasoline 91": 0, "Gasoline 95": 3145457, "Gasohol 91": 59202855, "Gasohol 95": 94925921, "Natural gas": 1486000000}, {"Sector": "Transportation", "Province": "Angthong", "BE_Year": 2563, "LPG": 1507500, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 64352277, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 440514, "Gasohol 91": 9087988, "Gasohol 95": 14064245, "Natural gas": 176000000}, {"Sector": "Transportation", "Province": "Lopburi", "BE_Year": 2563, "LPG": 5230040, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 148896848, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 687466, "Gasohol 91": 27912627, "Gasohol 95": 37218477, "Natural gas": 175000000}, {"Sector": "Transportation", "Province": "Sing Buri", "BE_Year": 2563, "LPG": 3280230, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 89198488, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 434549, "Gasohol 91": 10830057, "Gasohol 95": 20195477, "Natural gas": 317000000}, {"Sector": "Transportation", "Province": "Chainat", "BE_Year": 2563, "LPG": 2040580, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 59125902, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 978779, "Gasohol 91": 9373988, "Gasohol 95": 13210127, "Natural gas": 45000000}, {"Sector": "Transportation", "Province": "Saraburi", "BE_Year": 2563, "LPG": 9980883, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 574583871, "Fuel oil": 197037, "Gasoline 91": 0, "Gasoline 95": 2498195, "Gasohol 91": 46132311, "Gasohol 95": 70665227, "Natural gas": 5081000000}, {"Sector": "Transportation", "Province": "Chonburi", "BE_Year": 2563, "LPG": 33170517, "Low Speed Diesel (LSD)": 42215114, "High Speed Diesel (HSD)/Biodiesel": 1089216370, "Fuel oil": 801292569, "Gasoline 91": 482568, "Gasoline 95": 9858965, "Gasohol 91": 161607815, "Gasohol 95": 214479083, "Natural gas": 6674000000}, {"Sector": "Transportation", "Province": "Rayong", "BE_Year": 2563, "LPG": 15677809, "Low Speed Diesel (LSD)": 795527, "High Speed Diesel (HSD)/Biodiesel": 465473025, "Fuel oil": 46702798, "Gasoline 91": 0, "Gasoline 95": 4766107, "Gasohol 91": 60027838, "Gasohol 95": 105110477, "Natural gas": 845000000}, {"Sector": "Transportation", "Province": "Chanthaburi", "BE_Year": 2563, "LPG": 6675660, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 217945885, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 9449302, "Gasohol 91": 14574456, "Gasohol 95": 48565879, "Natural gas": 248000000}, {"Sector": "Transportation", "Province": "Trat", "BE_Year": 2563, "LPG": 1913020, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 70413368, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2774145, "Gasohol 91": 3302352, "Gasohol 95": 20844425, "Natural gas": 52000000}, {"Sector": "Transportation", "Province": "Chachoengsao", "BE_Year": 2563, "LPG": 9578357, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 400824815, "Fuel oil": 880628, "Gasoline 91": 0, "Gasoline 95": 3887830, "Gasohol 91": 43038343, "Gasohol 95": 71672782, "Natural gas": 2069000000}, {"Sector": "Transportation", "Province": "Prachinburi", "BE_Year": 2563, "LPG": 5063110, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 186683230, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1488791, "Gasohol 91": 28773410, "Gasohol 95": 37734013, "Natural gas": 794000000}, {"Sector": "Transportation", "Province": "Nakornnayok", "BE_Year": 2563, "LPG": 3574605, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 54767933, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1279000, "Gasohol 91": 11030033, "Gasohol 95": 16525051, "Natural gas": 104000000}, {"Sector": "Transportation", "Province": "Sa Kaeo", "BE_Year": 2563, "LPG": 6099740, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 123328432, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 351728, "Gasohol 91": 10610608, "Gasohol 95": 30505582, "Natural gas": 317000000}, {"Sector": "Transportation", "Province": "Nakhon Ratchasima", "BE_Year": 2563, "LPG": 31885347, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 966690414, "Fuel oil": 5966, "Gasoline 91": 0, "Gasoline 95": 4590831, "Gasohol 91": 114464603, "Gasohol 95": 151212754, "Natural gas": 1512000000}, {"Sector": "Transportation", "Province": "Buriram", "BE_Year": 2563, "LPG": 6612120, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 246122848, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2805848, "Gasohol 91": 49407205, "Gasohol 95": 42645603, "Natural gas": 224000000}, {"Sector": "Transportation", "Province": "Surin", "BE_Year": 2563, "LPG": 9473760, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 334611942, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1591234, "Gasohol 91": 50738490, "Gasohol 95": 38307070, "Natural gas": 201000000}, {"Sector": "Transportation", "Province": "Sisaket", "BE_Year": 2563, "LPG": 4364075, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 149410447, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1535116, "Gasohol 91": 20899858, "Gasohol 95": 33463277, "Natural gas": 99000000}, {"Sector": "Transportation", "Province": "Ubon Ratchathani", "BE_Year": 2563, "LPG": 8743154, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 249873544, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2312581, "Gasohol 91": 51825222, "Gasohol 95": 45666897, "Natural gas": 206000000}, {"Sector": "Transportation", "Province": "Yasothon", "BE_Year": 2563, "LPG": 3935350, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 66698461, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 445366, "Gasohol 91": 9775839, "Gasohol 95": 11109614, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Chaiyaphum", "BE_Year": 2563, "LPG": 3469580, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 134211159, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 699040, "Gasohol 91": 17626374, "Gasohol 95": 29525300, "Natural gas": 194000000}, {"Sector": "Transportation", "Province": "Amnat Charoen", "BE_Year": 2563, "LPG": 1174490, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 46531309, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 221626, "Gasohol 91": 6087869, "Gasohol 95": 10005398, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Bungkan", "BE_Year": 2563, "LPG": 1705880, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 38678320, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 3032, "Gasohol 91": 5815607, "Gasohol 95": 9262972, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nong Bua Lam Phu", "BE_Year": 2563, "LPG": 942460, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 59114861, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 74984, "Gasohol 91": 7112464, "Gasohol 95": 9235069, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Khon Kaen", "BE_Year": 2563, "LPG": 19835801, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 598530306, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1201606, "Gasohol 91": 88729335, "Gasohol 95": 85916068, "Natural gas": 1155000000}, {"Sector": "Transportation", "Province": "Udon Thani", "BE_Year": 2563, "LPG": 5770640, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 535017815, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2615660, "Gasohol 91": 71032859, "Gasohol 95": 117002278, "Natural gas": 244000000}, {"Sector": "Transportation", "Province": "Loei", "BE_Year": 2563, "LPG": 2181440, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 93701437, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 413331, "Gasohol 91": 15430280, "Gasohol 95": 18787502, "Natural gas": 47000000}, {"Sector": "Transportation", "Province": "Nong Khai", "BE_Year": 2563, "LPG": 964180, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 70859569, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 435292, "Gasohol 91": 12424269, "Gasohol 95": 17028445, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Maha Sarakam", "BE_Year": 2563, "LPG": 6397760, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 107769116, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 167271, "Gasohol 91": 30421016, "Gasohol 95": 20682562, "Natural gas": 281000000}, {"Sector": "Transportation", "Province": "Roi Et", "BE_Year": 2563, "LPG": 15874785, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 164217380, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 105950, "Gasohol 91": 24692561, "Gasohol 95": 41479991, "Natural gas": 248000000}, {"Sector": "Transportation", "Province": "Kalasin", "BE_Year": 2563, "LPG": 4821080, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 104341798, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 159714, "Gasohol 91": 19172831, "Gasohol 95": 18978350, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Sakon Nakhon", "BE_Year": 2563, "LPG": 3448422, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 140106774, "Fuel oil": 134000, "Gasoline 91": 0, "Gasoline 95": 194819, "Gasohol 91": 24420341, "Gasohol 95": 37532112, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nakhon Phanom", "BE_Year": 2563, "LPG": 6244181, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 76502948, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 0, "Gasohol 91": 15199962, "Gasohol 95": 15823499, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Mukdahan", "BE_Year": 2563, "LPG": 1790527, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 54338351, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 218760, "Gasohol 91": 5908050, "Gasohol 95": 11265469, "Natural gas": 124000000}, {"Sector": "Transportation", "Province": "Chiang Mai", "BE_Year": 2563, "LPG": 7522256, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 353418285, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 9660631, "Gasohol 91": 105790317, "Gasohol 95": 98671118, "Natural gas": 154000000}, {"Sector": "Transportation", "Province": "Lamphun", "BE_Year": 2563, "LPG": 993335, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 76214134, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 940128, "Gasohol 91": 19581600, "Gasohol 95": 15099913, "Natural gas": 48000000}, {"Sector": "Transportation", "Province": "Lampang", "BE_Year": 2563, "LPG": 2844997, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 317269927, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 5344255, "Gasohol 91": 38210767, "Gasohol 95": 55123704, "Natural gas": 215000000}, {"Sector": "Transportation", "Province": "Udtradit", "BE_Year": 2563, "LPG": 1374805, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 63052895, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1256784, "Gasohol 91": 8583973, "Gasohol 95": 20953190, "Natural gas": 52000000}, {"Sector": "Transportation", "Province": "Phare", "BE_Year": 2563, "LPG": 838300, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 63863500, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 796593, "Gasohol 91": 10650381, "Gasohol 95": 18367231, "Natural gas": 65000000}, {"Sector": "Transportation", "Province": "Nan", "BE_Year": 2563, "LPG": 900520, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 57804589, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1624547, "Gasohol 91": 7432516, "Gasohol 95": 26007912, "Natural gas": 14000000}, {"Sector": "Transportation", "Province": "Phayao", "BE_Year": 2563, "LPG": 418590, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 52310381, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2277022, "Gasohol 91": 12177596, "Gasohol 95": 13300115, "Natural gas": 49000000}, {"Sector": "Transportation", "Province": "Chiang Rai", "BE_Year": 2563, "LPG": 3760605, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 182992992, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 2620694, "Gasohol 91": 30693377, "Gasohol 95": 48969827, "Natural gas": 60000000}, {"Sector": "Transportation", "Province": "Mae Hong Son", "BE_Year": 2563, "LPG": 22985, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 30483708, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 6018154, "Gasohol 91": 5457909, "Gasohol 95": 6024116, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Nakhon Sawan", "BE_Year": 2563, "LPG": 8096832, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 349490657, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1705356, "Gasohol 91": 27971247, "Gasohol 95": 53847088, "Natural gas": 302000000}, {"Sector": "Transportation", "Province": "Uthai Thani", "BE_Year": 2563, "LPG": 1141130, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 44081220, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 12010, "Gasohol 91": 7537725, "Gasohol 95": 11487659, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Kamphaeng Phet", "BE_Year": 2563, "LPG": 2356060, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 121530431, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 627672, "Gasohol 91": 10814793, "Gasohol 95": 23536124, "Natural gas": 375000000}, {"Sector": "Transportation", "Province": "Tak", "BE_Year": 2563, "LPG": 1432100, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 174230918, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 150914, "Gasohol 91": 14468736, "Gasohol 95": 29088119, "Natural gas": 204000000}, {"Sector": "Transportation", "Province": "Sukhothai", "BE_Year": 2563, "LPG": 1238730, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 104467246, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1264912, "Gasohol 91": 10819237, "Gasohol 95": 25135801, "Natural gas": 119000000}, {"Sector": "Transportation", "Province": "Phitsanulok", "BE_Year": 2563, "LPG": 6280860, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 352908926, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 4854441, "Gasohol 91": 35485992, "Gasohol 95": 68581042, "Natural gas": 431000000}, {"Sector": "Transportation", "Province": "Phichit", "BE_Year": 2563, "LPG": 2530820, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 100693126, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 254998, "Gasohol 91": 11578128, "Gasohol 95": 25380742, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phetchabun", "BE_Year": 2563, "LPG": 3659155, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 139572731, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1416513, "Gasohol 91": 15444043, "Gasohol 95": 33391435, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Ratchaburi", "BE_Year": 2563, "LPG": 8588660, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 216585644, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 6490950, "Gasohol 91": 23354585, "Gasohol 95": 59055247, "Natural gas": 427000000}, {"Sector": "Transportation", "Province": "Kanchanaburi", "BE_Year": 2563, "LPG": 8727130, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 193643990, "Fuel oil": 105000, "Gasoline 91": 0, "Gasoline 95": 10420293, "Gasohol 91": 20993753, "Gasohol 95": 52237990, "Natural gas": 168000000}, {"Sector": "Transportation", "Province": "Suphanburi", "BE_Year": 2563, "LPG": 9863050, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 229308291, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 4518055, "Gasohol 91": 31086466, "Gasohol 95": 53927036, "Natural gas": 1057000000}, {"Sector": "Transportation", "Province": "Nakhon Pathom", "BE_Year": 2563, "LPG": 28650709, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 454082555, "Fuel oil": 2816645, "Gasoline 91": 0, "Gasoline 95": 6538247, "Gasohol 91": 46531657, "Gasohol 95": 109245938, "Natural gas": 2327000000}, {"Sector": "Transportation", "Province": "Samut Sakhon", "BE_Year": 2563, "LPG": 16324285, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 318887003, "Fuel oil": 1380888, "Gasoline 91": 0, "Gasoline 95": 2785744, "Gasohol 91": 32791654, "Gasohol 95": 65909242, "Natural gas": 439000000}, {"Sector": "Transportation", "Province": "Samut Songkhram", "BE_Year": 2563, "LPG": 3650825, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 116182233, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 5616760, "Gasohol 91": 11305420, "Gasohol 95": 21082918, "Natural gas": 453000000}, {"Sector": "Transportation", "Province": "Phetchaburi", "BE_Year": 2563, "LPG": 6519240, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 211398924, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1655646, "Gasohol 91": 21705381, "Gasohol 95": 52071114, "Natural gas": 603000000}, {"Sector": "Transportation", "Province": "Prachuap Khiri Khan", "BE_Year": 2563, "LPG": 4304295, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 204034658, "Fuel oil": 203305, "Gasoline 91": 0, "Gasoline 95": 1837765, "Gasohol 91": 20270022, "Gasohol 95": 43002010, "Natural gas": 404000000}, {"Sector": "Transportation", "Province": "Nakhon Si Thammarat", "BE_Year": 2563, "LPG": 6876580, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 340987311, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 8759678, "Gasohol 91": 38573174, "Gasohol 95": 91751227, "Natural gas": 257000000}, {"Sector": "Transportation", "Province": "Krabi", "BE_Year": 2563, "LPG": 909275, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 118056539, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 929556, "Gasohol 91": 22038779, "Gasohol 95": 28909861, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phangnga", "BE_Year": 2563, "LPG": 327460, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 64980546, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 277997, "Gasohol 91": 17787730, "Gasohol 95": 17235166, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phuket", "BE_Year": 2563, "LPG": 1860123, "Low Speed Diesel (LSD)": 1078722, "High Speed Diesel (HSD)/Biodiesel": 118628394, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1212423, "Gasohol 91": 59752893, "Gasohol 95": 44198455, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Surat Thani", "BE_Year": 2563, "LPG": 4658350, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 570650155, "Fuel oil": 6358651, "Gasoline 91": 0, "Gasoline 95": 10351732, "Gasohol 91": 58148283, "Gasohol 95": 114398651, "Natural gas": 238000000}, {"Sector": "Transportation", "Province": "Ranong", "BE_Year": 2563, "LPG": 286620, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 45479059, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1056489, "Gasohol 91": 4675819, "Gasohol 95": 10511444, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Chumphon", "BE_Year": 2563, "LPG": 2918970, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 247223758, "Fuel oil": 135000, "Gasoline 91": 0, "Gasoline 95": 7433476, "Gasohol 91": 16817308, "Gasohol 95": 46507660, "Natural gas": 91000000}, {"Sector": "Transportation", "Province": "Songkhla", "BE_Year": 2563, "LPG": 4877699, "Low Speed Diesel (LSD)": 77901414, "High Speed Diesel (HSD)/Biodiesel": 679210067, "Fuel oil": 113795, "Gasoline 91": 0, "Gasoline 95": 6841154, "Gasohol 91": 94845469, "Gasohol 95": 227770260, "Natural gas": 362000000}, {"Sector": "Transportation", "Province": "Satun", "BE_Year": 2563, "LPG": 492930, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 47687649, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 80025, "Gasohol 91": 8724940, "Gasohol 95": 22749187, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Trang", "BE_Year": 2563, "LPG": 1397370, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 97263850, "Fuel oil": 95838, "Gasoline 91": 0, "Gasoline 95": 2090994, "Gasohol 91": 20035019, "Gasohol 95": 32587493, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Phatthalung", "BE_Year": 2563, "LPG": 1289960, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 56950843, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 289082, "Gasohol 91": 9545406, "Gasohol 95": 17956561, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Pattani", "BE_Year": 2563, "LPG": 1100800, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 91904593, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 64277, "Gasohol 91": 5866057, "Gasohol 95": 54444415, "Natural gas": 64000000}, {"Sector": "Transportation", "Province": "Yala", "BE_Year": 2563, "LPG": 698180, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 48728096, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 1094576, "Gasohol 91": 4099710, "Gasohol 95": 32044910, "Natural gas": 0}, {"Sector": "Transportation", "Province": "Narathiwat", "BE_Year": 2563, "LPG": 135010, "Low Speed Diesel (LSD)": 0, "High Speed Diesel (HSD)/Biodiesel": 50953249, "Fuel oil": 0, "Gasoline 91": 0, "Gasoline 95": 266275, "Gasohol 91": 17682093, "Gasohol 95": 20502666, "Natural gas": 0}];
+        const probationData = [{"Year_TH": 2549, "Period": "- ", "Cases": 3, "Top_Province": " "}, {"Year_TH": 2550, "Period": "28  ธ.ค.    3  ม.ค. 50 ", "Cases": 4774, "Top_Province": "จังหวัดที่มีคดีมากได้แก่ กทม. 1,306 คดี  บุรีรัมย์  222 คดี  (ปริมาณคดีเพิ่มจากปี 2549  ประมาณ 40%) "}, {"Year_TH": 2551, "Period": "28  ธ.ค.  -  3  ม.ค.  51 ", "Cases": 3047, "Top_Province": "จังหวัดที่มีคดีมากได้แก่ กทม. 348 คดี นครราชสีมา  332 คดี"}, {"Year_TH": 2552, "Period": "ไม่ได้มีการเก็บ ", "Cases": 0, "Top_Province": "- "}, {"Year_TH": 2553, "Period": "29  ธ.ค.52  -  4 ม.ค. 53 ", "Cases": 3802, "Top_Province": "จังหวัดที่มีคดีมากได้แก่ กทม. 512 คดี สกลนคร 212 คดี"}, {"Year_TH": 2554, "Period": "29 ธ.ค.53  4 ม.ค.54 ", "Cases": 3379, "Top_Province": "จังหวัดที่มีคดีมาก ได้แก่ สุรินทร์ 353 คดี นครราชสีมา 162 คดี "}, {"Year_TH": 2555, "Period": "29 ธ.ค.54  4 ม.ค.55 ", "Cases": 3768, "Top_Province": "จังหวัดที่มีคดีมาก ได้แก่ สุรินทร์ 261 คดี ชลบุรี 209 คดี "}, {"Year_TH": 2556, "Period": "27 ธ.ค.55  2 ม.ค.56 ", "Cases": 4635, "Top_Province": "จังหวัดที่มีคดีมาก ได้แก่ กทม. 398 คดี มหาสารคาม 289 คดี "}, {"Year_TH": 2557, "Period": "27 ธ.ค.56  2 ม.ค.57 ", "Cases": 3797, "Top_Province": "จังหวัดที่มีคดีมาก ได้แก่ สกลนคร 407 คดี ชลบุรี 261 คดี "}, {"Year_TH": 2558, "Period": "30 ธ.ค.57 -5 ม.ค.58 ", "Cases": 4059, "Top_Province": "จังหวัดที่มีคดีมาก ได้แก่ ชลบุรี 333 คดี มหาสารคาม 273 คดี"}, {"Year_TH": 2559, "Period": "29 ธ.ค.58  4 ม.ค. 59 ", "Cases": 3471, "Top_Province": "จังหวัดที่มีคดีมาก ได้แก่ นครพนม 221  คดี  กทม. 212 คดี  ปทุมธานี 205 คดี "}];
+
+        // Tab Switch logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            
+            // Find the active button and add class
+            const btns = document.querySelectorAll('.tab-btn');
+            if (tabId === 'overview') btns[0].classList.add('active');
+            else if (tabId === 'energy') {
+                btns[1].classList.add('active');
+                renderEnergyCharts();
+            }
+            else if (tabId === 'probation') {
+                btns[2].classList.add('active');
+                renderProbationCharts();
+                renderProbationTable();
+            }
+        }
+
+        // Initialization
+        window.onload = function() {
+            switchTab('overview');
+        }
+
+        // --- SECTION: ENERGY BUSINESS (DOEB) ---
+        let energyChartsRendered = false;
+
+        function renderEnergyCharts() {
+            if (energyChartsRendered) return; // Prevent double rendering on tab switch
+            updateEnergyCharts();
+            energyChartsRendered = true;
+        }
+
+        function updateEnergyCharts() {
+            const selectedYear = parseInt(document.getElementById('energy-year').value);
+            const selectedFuel = document.getElementById('energy-fuel').value;
+
+            // 1. Line Chart: National yearly consumption trends
+            const years = [2561, 2562, 2563];
+            const dieselTrends = [];
+            const gasolineTrends = [];
+            const gasTrends = [];
+
+            years.forEach(yr => {
+                let d = 0, g = 0, gas = 0;
+                fuelData.forEach(row => {
+                    if (row.BE_Year === yr) {
+                        d += (row['Low Speed Diesel (LSD)'] + row['High Speed Diesel (HSD)/Biodiesel']);
+                        g += (row['Gasoline 91'] + row['Gasoline 95'] + row['Gasohol 91'] + row['Gasohol 95']);
+                        gas += (row['LPG'] + row['Natural gas']);
+                    }
+                });
+                dieselTrends.push(d);
+                gasolineTrends.push(g);
+                gasTrends.push(gas);
+            });
+
+            const trendTrace1 = {
+                x: years,
+                y: dieselTrends,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'ดีเซล (Diesel)',
+                line: { color: '#3b82f6', width: 3 }
+            };
+
+            const trendTrace2 = {
+                x: years,
+                y: gasolineTrends,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'เบนซิน/แก๊สโซฮอล์',
+                line: { color: '#ec4899', width: 3 }
+            };
+
+            const trendTrace3 = {
+                x: years,
+                y: gasTrends,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'แก๊ส LPG/NGV',
+                line: { color: '#10b981', width: 3 }
+            };
+
+            const trendLayout = {
+                title: '📈 แนวโน้มการบริโภคพลังงานภาคขนส่งระดับประเทศ (2561 - 2563)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6', family: 'Prompt' },
+                xaxis: { tickvals: [2561, 2562, 2563], title: 'ปี พ.ศ.' },
+                yaxis: { title: 'ปริมาณ (ลิตร / กิโลกรัม)' },
+                legend: { orientation: 'h', y: -0.2 }
+            };
+
+            Plotly.newPlot('energy-trend-plot', [trendTrace1, trendTrace2, trendTrace3], trendLayout, {responsive: true});
+
+            // 2. Pie Chart: Selected Year fuel mix share
+            let totalDieselSel = 0;
+            let totalGasolineSel = 0;
+            let totalGasSel = 0;
+
+            fuelData.forEach(row => {
+                if (row.BE_Year === selectedYear) {
+                    totalDieselSel += (row['Low Speed Diesel (LSD)'] + row['High Speed Diesel (HSD)/Biodiesel']);
+                    totalGasolineSel += (row['Gasoline 91'] + row['Gasoline 95'] + row['Gasohol 91'] + row['Gasohol 95']);
+                    totalGasSel += (row['LPG'] + row['Natural gas']);
+                }
+            });
+
+            const pieData = [{
+                values: [totalDieselSel, totalGasolineSel, totalGasSel],
+                labels: ['ดีเซล (Diesel)', 'เบนซิน/แก๊สโซฮอล์', 'แก๊ส LPG/NGV'],
+                type: 'pie',
+                hole: 0.4,
+                marker: { colors: ['#3b82f6', '#ec4899', '#10b981'] }
+            }];
+
+            const pieLayout = {
+                title: `📊 สัดส่วนการใช้พลังงานปี ${selectedYear}`,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6', family: 'Prompt' },
+                showlegend: false
+            };
+
+            Plotly.newPlot('energy-pie-plot', pieData, pieLayout, {responsive: true});
+
+            // 3. Horizontal Bar Chart: Top 10 provinces for selected fuel and year (excluding Bangkok)
+            const provData = fuelData.filter(row => row.BE_Year === selectedYear && row.Province !== 'Bangkok');
+            
+            provData.forEach(row => {
+                if (selectedFuel === 'Gasoline_Gasohol') {
+                    row.calcValue = row['Gasoline 91'] + row['Gasoline 95'] + row['Gasohol 91'] + row['Gasohol 95'];
+                } else if (selectedFuel === 'Diesel') {
+                    row.calcValue = row['Low Speed Diesel (LSD)'] + row['High Speed Diesel (HSD)/Biodiesel'];
+                } else {
+                    row.calcValue = row['LPG'] + row['Natural gas'];
+                }
+            });
+
+            provData.sort((a, b) => b.calcValue - a.calcValue);
+            const top10 = provData.slice(0, 10);
+            top10.reverse();
+
+            const fuelNames = {
+                'Gasoline_Gasohol': 'เบนซิน/แก๊สโซฮอล์',
+                'Diesel': 'ดีเซล',
+                'Gas_LPG_NGV': 'แก๊ส LPG/NGV'
+            };
+
+            const barTrace = {
+                x: top10.map(r => r.calcValue),
+                y: top10.map(r => r.Province),
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: top10.map(r => r.calcValue),
+                    colorscale: 'Viridis'
+                }
+            };
+
+            const barLayout = {
+                title: `🏆 10 อันดับต่างจังหวัดที่มีปริมาณการใช้ ${fuelNames[selectedFuel]} สูงสุด (ปี พ.ศ. ${selectedYear})`,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6', family: 'Prompt' },
+                xaxis: { title: 'ปริมาณ (ลิตร)' },
+                margin: { l: 150 }
+            };
+
+            Plotly.newPlot('energy-prov-plot', [barTrace], barLayout, {responsive: true});
+        }
+
+
+        // --- SECTION: PROBATION (DEPARTMENT OF PROBATION) ---
+        let probationChartsRendered = false;
+
+        function renderProbationCharts() {
+            if (probationChartsRendered) return;
+
+            const cleanProb = probationData.filter(row => row.Cases > 0);
+            cleanProb.sort((a, b) => a.Year_TH - b.Year_TH);
+
+            const years = cleanProb.map(r => r.Year_TH);
+            const cases = cleanProb.map(r => r.Cases);
+
+            const trace = {
+                x: years,
+                y: cases,
+                type: 'bar',
+                text: cases.map(String),
+                textposition: 'outside',
+                marker: {
+                    color: cases,
+                    colorscale: 'Reds'
+                }
+            };
+
+            const layout = {
+                title: '🚨 สถิติคดีเมาแล้วขับคุมประพฤติในช่วงเทศกาลปีใหม่ (พ.ศ. 2549 - 2559)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6', family: 'Prompt' },
+                xaxis: { title: 'ปี พ.ศ.', dtick: 1 },
+                yaxis: { title: 'จำนวนคดีสะสม (คดี)', range: [0, 5500] }
+            };
+
+            Plotly.newPlot('probation-trend-plot', [trace], layout, {responsive: true});
+            probationChartsRendered = true;
+        }
+
+        function renderProbationTable() {
+            const tbody = document.getElementById('probation-table-body');
+            tbody.innerHTML = '';
+
+            const sortedData = [...probationData].sort((a, b) => b.Year_TH - a.Year_TH);
+
+            sortedData.forEach(row => {
+                const tr = document.createElement('tr');
+                let casesText = row.Cases > 0 ? Number(row.Cases).toLocaleString() + ' คดี' : 'ไม่มีการเก็บสถิติ';
+                
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: #fff;">${row.Year_TH}</td>
+                    <td>${row.Period}</td>
+                    <td style="color: ${row.Cases > 0 ? 'var(--secondary)' : 'var(--text-muted)'};">${casesText}</td>
+                    <td>${row.Top_Province || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>

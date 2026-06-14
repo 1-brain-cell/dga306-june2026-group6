@@ -1,0 +1,131 @@
+{
+  "dataset": "การรับคดีคุมความประพฤติผู้กระทำผิดที่เป็นผู้ใหญ่ ปี 2566",
+  "rows": 109,
+  "columns": 14,
+  "fields": [
+    {
+      "column": "สำนักงานคุมประพฤติ",
+      "dtype": "object",
+      "non_null": 109,
+      "null": 0,
+      "sample": "สำนักงานคุมประพฤติกรุงเทพมหานคร 1"
+    },
+    {
+      "column": "เดือน ต.ค.2565",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "81",
+      "min": "19",
+      "max": "691"
+    },
+    {
+      "column": "เดือน พ.ย.2565",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "83",
+      "min": "11",
+      "max": "732"
+    },
+    {
+      "column": "เดือน ธ.ค.2565",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "45",
+      "min": "3",
+      "max": "1103"
+    },
+    {
+      "column": "เดือน ม.ค.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "68",
+      "min": "19",
+      "max": "895"
+    },
+    {
+      "column": "เดือน ก.พ.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "42",
+      "min": "7",
+      "max": "526"
+    },
+    {
+      "column": "เดือน มี.ค.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "58",
+      "min": "3",
+      "max": "657"
+    },
+    {
+      "column": "เดือน เม.ย.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "59",
+      "min": "22",
+      "max": "997"
+    },
+    {
+      "column": "เดือน พ.ค.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "55",
+      "min": "4",
+      "max": "570"
+    },
+    {
+      "column": "เดือน มิ.ย.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "75",
+      "min": "3",
+      "max": "553"
+    },
+    {
+      "column": "เดือน ก.ค.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "60",
+      "min": "2",
+      "max": "628"
+    },
+    {
+      "column": "เดือน ส.ค.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "67",
+      "min": "7",
+      "max": "605"
+    },
+    {
+      "column": "เดือน ก.ย.2566",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "97",
+      "min": "1",
+      "max": "587"
+    },
+    {
+      "column": "year_be",
+      "dtype": "int64",
+      "non_null": 109,
+      "null": 0,
+      "sample": "2566",
+      "min": "2566",
+      "max": "2566"
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "dataset": "ปริมาณการจำหน่ายน้ำมันดีเซลหมุนเร็ว บี 7 (รวมทุกปี)",
+  "rows": 125983,
+  "columns": 14,
+  "fields": [
+    {
+      "column": "SUBJECT",
+      "dtype": "object",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "ปริมาณการจำหน่ายน้ำมันดีเซลหมุนเร็ว บี7"
+    },
+    {
+      "column": "YEAR_ID",
+      "dtype": "int64",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "2560",
+      "min": "2560",
+      "max": "2568"
+    },
+    {
+      "column": "MONTH_ID",
+      "dtype": "int64",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "1",
+      "min": "1",
+      "max": "12"
+    },
+    {
+      "column": "REGION_ZONE_NAME",
+      "dtype": "object",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "ภาคใต้"
+    },
+    {
+      "column": "PROVINCE_FULLNAME",
+      "dtype": "object",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "กระบี่"
+    },
+    {
+      "column": "ENTREPRENEUR",
+      "dtype": "object",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "พีทีจี เอ็นเนอยี"
+    },
+    {
+      "column": "ENTRE_SECTIONID",
+      "dtype": "object",
+      "non_null": 114419,
+      "null": 11564,
+      "sample": "ม.7"
+    },
+    {
+      "column": "OIL_NAME_ENG",
+      "dtype": "object",
+      "non_null": 114419,
+      "null": 11564,
+      "sample": "ADO B7"
+    },
+    {
+      "column": "OIL_NAME_THAI",
+      "dtype": "object",
+      "non_null": 114419,
+      "null": 11564,
+      "sample": "น้ำมันดีเซลหมุนเร็ว บี7"
+    },
+    {
+      "column": "QTY",
+      "dtype": "float64",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "0.0",
+      "min": "0.0",
+      "max": "190581.0"
+    },
+    {
+      "column": "UNIT",
+      "dtype": "object",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "พันลิตรต่อเดือน"
+    },
+    {
+      "column": "DATAOWNER",
+      "dtype": "object",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "กรมธุรกิจพลังงาน"
+    },
+    {
+      "column": "year_be",
+      "dtype": "int64",
+      "non_null": 125983,
+      "null": 0,
+      "sample": "2560",
+      "min": "2560",
+      "max": "2568"
+    },
+    {
+      "column": "BUSCUSTOMER_SHORT_TH",
+      "dtype": "object",
+      "non_null": 11564,
+      "null": 114419,
+      "sample": "การขนส่ง"
+    }
+  ]
+}

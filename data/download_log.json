@@ -1,0 +1,78 @@
+{
+  "run_at": "2026-06-14T19:52:26.394055",
+  "success": [
+    {
+      "file": "doeb_ado_b7_2560.csv",
+      "rows": 13860,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2561.csv",
+      "rows": 14322,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2562.csv",
+      "rows": 14476,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2563.csv",
+      "rows": 13860,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2564.csv",
+      "rows": 13321,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2565.csv",
+      "rows": 14781,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2566.csv",
+      "rows": 15400,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2567.csv",
+      "rows": 14399,
+      "cols": 12,
+      "status": "ok"
+    },
+    {
+      "file": "doeb_ado_b7_2568.xlsx",
+      "rows": 11564,
+      "cols": 10,
+      "status": "ok"
+    },
+    {
+      "file": "probation_adult_2565.csv",
+      "rows": 109,
+      "cols": 13,
+      "status": "ok"
+    },
+    {
+      "file": "probation_adult_2566.csv",
+      "rows": 109,
+      "cols": 13,
+      "status": "ok"
+    },
+    {
+      "file": "probation_adult_2565_guilty.csv",
+      "rows": 17,
+      "cols": 13,
+      "status": "ok"
+    }
+  ],
+  "rejected": []
+}

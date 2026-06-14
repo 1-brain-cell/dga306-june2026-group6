@@ -1,0 +1,131 @@
+{
+  "dataset": "คดีสอดส่อง (ผู้ใหญ่) จำแนกฐานความผิด 2565",
+  "rows": 17,
+  "columns": 14,
+  "fields": [
+    {
+      "column": "ฐานความผิด",
+      "dtype": "object",
+      "non_null": 17,
+      "null": 0,
+      "sample": "ความผิดเกี่ยวกับทรัพย์"
+    },
+    {
+      "column": "เดือน ต.ค.2564",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "405",
+      "min": "0",
+      "max": "3904"
+    },
+    {
+      "column": "เดือน พ.ย.2564",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "423",
+      "min": "1",
+      "max": "4477"
+    },
+    {
+      "column": "เดือน ธ.ค.2564",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "487",
+      "min": "5",
+      "max": "11451"
+    },
+    {
+      "column": "เดือน ม.ค.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "440",
+      "min": "4",
+      "max": "12573"
+    },
+    {
+      "column": "เดือน ก.พ.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "433",
+      "min": "7",
+      "max": "13209"
+    },
+    {
+      "column": "เดือน มี.ค.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "609",
+      "min": "7",
+      "max": "15917"
+    },
+    {
+      "column": "เดือน เม.ย.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "444",
+      "min": "7",
+      "max": "13556"
+    },
+    {
+      "column": "เดือน พ.ค.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "487",
+      "min": "6",
+      "max": "15949"
+    },
+    {
+      "column": "เดือน มิ.ย.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "529",
+      "min": "6",
+      "max": "17061"
+    },
+    {
+      "column": "เดือน ก.ค.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "473",
+      "min": "6",
+      "max": "13698"
+    },
+    {
+      "column": "เดือน ส.ค.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "627",
+      "min": "6",
+      "max": "17936"
+    },
+    {
+      "column": "เดือน ก.ย.2565",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "544",
+      "min": "4",
+      "max": "14590"
+    },
+    {
+      "column": "year_be",
+      "dtype": "int64",
+      "non_null": 17,
+      "null": 0,
+      "sample": "2565",
+      "min": "2565",
+      "max": "2565"
+    }
+  ]
+}
