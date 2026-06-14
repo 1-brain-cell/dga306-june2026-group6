@@ -4,6 +4,10 @@
 
 วัตถุประสงค์หลักของงานใน Repository นี้ คือการนำข้อมูลเปิดภาครัฐ (Open Government Data) จากแหล่งข้อมูลจริงของหน่วยงานรัฐมาวิเคราะห์ ทำความสะอาด สร้างแผนภาพแบบโต้ตอบได้ (Interactive Visualization) และทดลองใช้แบบจำลองการเรียนรู้ของเครื่อง (Machine Learning) เพื่อพยากรณ์แนวโน้มข้อมูล พร้อมนำเสนอผลลัพธ์ทั้งหมดผ่านแดชบอร์ดแบบโต้ตอบ (Interactive Dashboard) ที่เปิดดูได้ผ่านเว็บเบราว์เซอร์โดยไม่ต้องติดตั้งโปรแกรมเพิ่มเติม
 
+### Integrated Dashboard
+
+[links](https://1-brain-cell.github.io/dga306-june2026-group6/output/integrated_dashboard.html)
+
 ---
 
 ## ชุดข้อมูลที่ใช้
